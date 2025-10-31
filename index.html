@@ -11,7 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     
     <!-- Chosen Palette: Calm Harmony (Stone, Indigo, White) -->
-    <!-- Application Structure Plan: La structure est un tableau de bord thématique d'une seule page, et non un rapport linéaire. Il utilise une navigation supérieure ('Accueil', 'Expertise Technique', 'Leadership & Soft Skills', 'Parcours') pour sauter vers les sections. Ce choix est motivé par l'ergonomie, permettant à un recruteur d'explorer instantanément le domaine qui l'intéresse le plus (par exemple, "montrez-moi ses compétences en leadership" ou "montrez-moi ses projets ML") plutôt que de lire de haut en bas. Les interactions se concentrent sur la *connexion des affirmations aux preuves* (par exemple, cliquer sur une soft skill affiche une description ET une puce de support provenant d'un emploi) et le *filtrage* (par exemple, cliquer sur une compétence technique filtre une liste de projets). -->
+    <!-- Application Structure Plan: La structure est un tableau de bord thématique d'une seule page, et non un rapport linéaire. Il utilise une navigation supérieure ('Accueil', 'Compétences Techniques', 'Leadership & Soft Skills', 'Parcours') pour sauter vers les sections. Ce choix est motivé par l'ergonomie, permettant à un recruteur d'explorer instantanément le domaine qui l'intéresse le plus (par exemple, "montrez-moi ses compétences en leadership" ou "montrez-moi ses projets ML") plutôt que de lire de haut en bas. Les interactions se concentrent sur la *connexion des affirmations aux preuves* (par exemple, cliquer sur une soft skill affiche une description ET une puce de support provenant d'un emploi) et le *filtrage* (par exemple, cliquer sur une compétence technique filtre une liste de projets). -->
     <!-- Visualization & Content Choices: 
         - Info: Compétences Techniques (Python, SQL, etc. + Années). Goal: Informer/Comparer. Viz: Graphique à barres horizontales. Interaction: Survol pour infobulles. Justification: Plus engageant et plus facile à analyser "années" qu'une liste statique. Library: Chart.js (Canvas).
         - Info: Rôles/Domaines Clés (Back-end, ML, DevOps). Goal: Organiser/Explorer. Viz: Cartes interactives. Interaction: onClick filtre. Justification: Permet à l'utilisateur de sélectionner lui-même son domaine d'intérêt et de voir *uniquement* les projets pertinents, liant directement les compétences à l'application. Library: Vanilla JS.
@@ -95,7 +95,7 @@
                 <div class="hidden sm:block">
                     <div class="flex items-center space-x-2">
                         <a href="#accueil" class="nav-link active" data-navlink="accueil">Accueil</a>
-                        <a href="#expertise" class="nav-link" data-navlink="expertise">Expertise Technique</a>
+                        <a href="#expertise" class="nav-link" data-navlink="expertise">Compétences Techniques</a>
                         <a href="#leadership" class="nav-link" data-navlink="leadership">Leadership & Soft Skills</a>
                         <a href="#parcours" class="nav-link" data-navlink="parcours">Parcours</a>
                     </div>
@@ -103,7 +103,7 @@
                 <div class="sm:hidden">
                     <select id="mobile-nav" class="w-full rounded-md border-stone-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                         <option value="accueil">Accueil</option>
-                        <option value="expertise">Expertise Technique</option>
+                        <option value="expertise">Compétences Techniques</option>
                         <option value="leadership">Leadership & Soft Skills</option>
                         <option value="parcours">Parcours</option>
                     </select>
@@ -134,23 +134,23 @@
             
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto mt-12 text-center">
                 <div class="bg-white rounded-xl shadow-lg p-6">
-                    <span class="text-4xl font-bold text-indigo-600">15+</span>
+                    <span class="text-4xl font-bold text-indigo-600">15</span>
                     <p class="mt-2 text-lg font-medium text-stone-700">Ans d'Expérience</p>
                 </div>
                 <div class="bg-white rounded-xl shadow-lg p-6">
-                    <span class="text-4xl font-bold text-indigo-600">7+</span>
+                    <span class="text-4xl font-bold text-indigo-600">8</span>
                     <p class="mt-2 text-lg font-medium text-stone-700">Ans en Leadership & Encadrement</p>
                 </div>
                 <div class="bg-white rounded-xl shadow-lg p-6">
-                    <span class="text-4xl font-bold text-indigo-600">5+</span>
+                    <span class="text-4xl font-bold text-indigo-600">8</span>
                     <p class="mt-2 text-lg font-medium text-stone-700">Ans en Machine Learning</p>
                 </div>
             </div>
         </section>
 
-        <!-- Section 2: Expertise Technique -->
+        <!-- Section 2: Compétences Techniques -->
         <section id="expertise" class="mb-20 scroll-mt-20">
-            <h2 class="text-3xl font-bold text-stone-900 mb-4">Expertise Technique</h2>
+            <h2 class="text-3xl font-bold text-stone-900 mb-4">Compétences Techniques</h2>
             <p class="text-lg text-stone-700 max-w-4xl mb-10">
                 Cette section détaille mon stack technique et la manière dont je l'applique.</br> 
                 Visualisez mes années d'expérience avec les technologies clés et filtrez les projets pertinents pour voir comment ces compétences se traduisent en solutions concrètes.</br>
@@ -205,7 +205,7 @@
                             <p class="mt-2 text-stone-700">Conception, développement et Lead technique sur la plateforme IRIS (cartes de la qualité de l'air à très haute résolution).</p>
                         </div>
                         <div class="project-item" data-skill-tags="ml">
-                            <h4 class="font-semibold text-indigo-700">Modèle d'IA (EXPLUME)</h4>
+                            <h4 class="font-semibold text-indigo-700">Modèle d'exposition humaine (EXPLUME)</h4>
                             <p class="text-sm text-stone-600">Chez LMD, Ecole Polytechnique, France</p>
                             <p class="mt-2 text-stone-700">Développement d'un modèle d'IA utilisé pour l'étude de la pollution de l'air et de la santé humaine.</p>
                         </div>
@@ -428,7 +428,7 @@
 
         const skillsData = {
             labels: ['Python', 'SQL', 'Scikit-learn/XGBoost', 'Jenkins/Git/Jira', 'Django/REST API', 'Mathématiques Avancées'],
-            data: [12, 12, 5, 7, 6, 20]
+            data: [13, 10, 8, 7, 7, 20]
         };
 
         function initChart() {
@@ -580,6 +580,7 @@
     </script>
 </body>
 </html>
+
 
 
 
