@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="fr" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CV Interactif - Konstantinos MARKAKIS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.1/chart.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Chosen Palette: Calm Harmony (Stone, Indigo, White) -->
+    <!-- Application Structure Plan: La structure est un tableau de bord thématique d'une seule page, et non un rapport linéaire. Il utilise une navigation supérieure ('Accueil', 'Expertise Technique', 'Leadership & Soft Skills', 'Parcours') pour sauter vers les sections. Ce choix est motivé par l'ergonomie, permettant à un recruteur d'explorer instantanément le domaine qui l'intéresse le plus (par exemple, "montrez-moi ses compétences en leadership" ou "montrez-moi ses projets ML") plutôt que de lire de haut en bas. Les interactions se concentrent sur la *connexion des affirmations aux preuves* (par exemple, cliquer sur une soft skill affiche une description ET une puce de support provenant d'un emploi) et le *filtrage* (par exemple, cliquer sur une compétence technique filtre une liste de projets). -->
+    <!-- Visualization & Content Choices: 
+        - Info: Compétences Techniques (Python, SQL, etc. + Années). Goal: Informer/Comparer. Viz: Graphique à barres horizontales. Interaction: Survol pour infobulles. Justification: Plus engageant et plus facile à analyser "années" qu'une liste statique. Library: Chart.js (Canvas).
+        - Info: Rôles/Domaines Clés (Back-end, ML, DevOps). Goal: Organiser/Explorer. Viz: Cartes interactives. Interaction: onClick filtre. Justification: Permet à l'utilisateur de sélectionner lui-même son domaine d'intérêt et de voir *uniquement* les projets pertinents, liant directement les compétences à l'application. Library: Vanilla JS.
+        - Info: Soft Skills (Leadership, Mentorat, etc.). Goal: Organiser/Explorer. Viz: Zone de contenu à onglets/bascules. Interaction: onClick afficher/masquer. Justification: Relie la soft skill abstraite (l'affirmation) à la description concrète et extrait *également* des points spécifiques des expériences professionnelles comme preuve. Library: Vanilla JS.
+        - Info: Parcours professionnel/Éducation. Goal: Changement (temporel). Viz: Chronologie verticale. Interaction: onClick pour étendre/réduire les détails. Justification: Une chronologie est le moyen le plus intuitif de montrer la progression de carrière, et la rendre réductible garde l'interface utilisateur propre et scannable. Library: Vanilla JS.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f7f6; /* bg-stone-50 */
+            color: #292524; /* bg-stone-800 */
+        }
+        .nav-link {
+            @apply px-4 py-2 rounded-lg text-sm font-medium text-stone-600 hover:bg-stone-200 hover:text-stone-900 transition-colors duration-200;
+        }
+        .nav-link.active {
+            @apply bg-indigo-600 text-white hover:bg-indigo-700 hover:text-white;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 400px;
+            max-height: 450px;
+        }
+        @media (max-width: 768px) {
+            .chart-container {
+                height: 300px;
+            }
+        }
+        @media (max-width: 640px) {
+            .chart-container {
+                height: 450px;
+            }
+        }
+        .skill-card {
+            @apply bg-white p-4 rounded-lg shadow-md cursor-pointer border-2 border-transparent transition-all duration-200;
+        }
+        .skill-card.active {
+            @apply border-indigo-500 ring-2 ring-indigo-300;
+        }
+        .project-item {
+            @apply bg-white p-4 rounded-lg shadow transition-opacity duration-300;
+        }
+        .soft-skill-btn {
+            @apply px-4 py-2 text-sm font-medium rounded-md cursor-pointer transition-colors duration-200;
+        }
+        .soft-skill-btn.active {
+            @apply bg-indigo-600 text-white;
+        }
+        .soft-skill-btn.inactive {
+            @apply bg-stone-200 text-stone-700 hover:bg-stone-300;
+        }
+        .timeline-item {
+            @apply relative pl-8 sm:pl-10;
+        }
+        .timeline-dot {
+            @apply absolute left-0 top-1.5 w-4 h-4 rounded-full bg-indigo-600 border-4 border-white;
+        }
+        .timeline-line {
+            @apply absolute left-[7px] top-1.5 h-full w-0.5 bg-stone-300;
+        }
+        .timeline-item:last-child .timeline-line {
+            @apply hidden;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Header & Navigation -->
+    <header class="sticky top-0 z-50 bg-white/90 backdrop-blur-sm shadow-sm">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex-shrink-0">
+                    <span class="text-xl font-bold text-indigo-600">K. MARKAKIS</span>
+                </div>
+                <div class="hidden sm:block">
+                    <div class="flex items-center space-x-2">
+                        <a href="#accueil" class="nav-link active" data-navlink="accueil">Accueil</a>
+                        <a href="#expertise" class="nav-link" data-navlink="expertise">Expertise Technique</a>
+                        <a href="#leadership" class="nav-link" data-navlink="leadership">Leadership & Soft Skills</a>
+                        <a href="#parcours" class="nav-link" data-navlink="parcours">Parcours</a>
+                    </div>
+                </div>
+                <div class="sm:hidden">
+                    <select id="mobile-nav" class="w-full rounded-md border-stone-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        <option value="accueil">Accueil</option>
+                        <option value="expertise">Expertise Technique</option>
+                        <option value="leadership">Leadership & Soft Skills</option>
+                        <option value="parcours">Parcours</option>
+                    </select>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+
+        <!-- Section 1: Accueil (Hero/Profile) -->
+        <section id="accueil" class="mb-20 scroll-mt-20">
+            <div class="text-center mb-12">
+                <h1 class="text-4xl font-bold tracking-tight text-stone-900 sm:text-5xl">Konstantinos MARKAKIS</h1>
+                <h2 class="mt-3 text-2xl font-medium text-indigo-600">Développeur Lead / Lead Tech</h2>
+                <p class="mt-1 text-lg text-stone-600">(Back-end / Machine Learning / DevOps / MLOps)</p>
+            </div>
+
+            <div class="max-w-3xl mx-auto bg-white rounded-xl shadow-xl p-8">
+                <h3 class="text-xl font-semibold text-stone-800 mb-4">Profil</h3>
+                <p class="text-lg text-stone-700 leading-relaxed">
+                    Carrière de plus de 15 ans dédiée au développement de logiciels innovants et complète (full life-cycle), en quête du prochain défi. 
+                    Expertise avérée en Data Science et Machine Learning, j'associe une solide base technique à un leadership critique pour transformer des problèmes complexes en solutions innovantes et piloter l'évolution des stratégies d'équipe face aux enjeux de l'IA.
+                </p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto mt-12 text-center">
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <span class="text-4xl font-bold text-indigo-600">15+</span>
+                    <p class="mt-2 text-lg font-medium text-stone-700">Ans d'Expérience</p>
+                </div>
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <span class="text-4xl font-bold text-indigo-600">7+</span>
+                    <p class="mt-2 text-lg font-medium text-stone-700">Ans en Leadership & Encadrement</p>
+                </div>
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <span class="text-4xl font-bold text-indigo-600">5+</span>
+                    <p class="mt-2 text-lg font-medium text-stone-700">Ans en Machine Learning</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: Expertise Technique -->
+        <section id="expertise" class="mb-20 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-stone-900 mb-4">Expertise Technique</h2>
+            <p class="text-lg text-stone-700 max-w-4xl mb-10">
+                Cette section détaille mon stack technique et la manière dont je l'applique. Visualisez mes années d'expérience avec les technologies clés et filtrez les projets pertinents pour voir comment ces compétences se traduisent en solutions concrètes.
+            </p>
+
+            <div class="bg-white rounded-xl shadow-xl p-6 md:p-8 mb-12">
+                <h3 class="text-xl font-semibold text-stone-800 mb-6 text-center">Compétences Principales (Années d'Expérience)</h3>
+                <div class="chart-container">
+                    <canvas id="skillsChart"></canvas>
+                </div>
+            </div>
+
+            <div class="lg:grid lg:grid-cols-3 lg:gap-8">
+                <div class="lg:col-span-1">
+                    <h3 class="text-xl font-semibold text-stone-800 mb-4">Domaines d'Application</h3>
+                    <p class="text-stone-600 mb-4">Cliquez sur un domaine pour filtrer les projets correspondants.</p>
+                    <div class="space-y-4">
+                        <div class="skill-card active" data-skill="all" onclick="filterProjects('all', this)">
+                            <h4 class="text-lg font-medium text-stone-900">Tous les Projets</h4>
+                            <p class="text-sm text-stone-600">Afficher l'ensemble de mon expérience.</p>
+                        </div>
+                        <div class="skill-card" data-skill="backend" onclick="filterProjects('backend', this)">
+                            <h4 class="text-lg font-medium text-stone-900">Back-end & API REST/SaaS</h4>
+                            <p class="text-sm text-stone-600">Conception de plateformes robustes et scalables.</p>
+                        </div>
+                        <div class="skill-card" data-skill="ml" onclick="filterProjects('ml', this)">
+                            <h4 class="text-lg font-medium text-stone-900">Machine Learning</h4>
+                            <p class="text-sm text-stone-600">Modélisation IA et calcul parallèle.</p>
+                        </div>
+                        <div class="skill-card" data-skill="devops" onclick="filterProjects('devops', this)">
+                            <h4 class="text-lg font-medium text-stone-900">DevOps & CI/CD</h4>
+                            <p class="text-sm text-stone-600">Automatisation des déploiements.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="lg:col-span-2 mt-10 lg:mt-0">
+                    <h3 class="text-xl font-semibold text-stone-800 mb-4">Projets Pertinents</h3>
+                    <div id="project-list" class="space-y-6">
+                        <div class="project-item" data-skill-tags="backend ml">
+                            <h4 class="font-semibold text-indigo-700">Plateforme d'Ingénierie Système (GEP)</h4>
+                            <p class="text-sm text-stone-600">Chez Geeglee</p>
+                            <p class="mt-2 text-stone-700">Conception et pilotage du back-end, intégrant des algorithmes de Machine Learning, de calcul parallèle et des API REST/SaaS.</p>
+                        </div>
+                        <div class="project-item" data-skill-tags="devops">
+                            <h4 class="font-semibold text-indigo-700">Pipeline CI/CD</h4>
+                            <p class="text-sm text-stone-600">Chez Geeglee</p>
+                            <p class="mt-2 text-stone-700">Mise en place et optimisation d'un pipeline CI/CD complet (Jenkins), réduisant le temps de mise en production de 50%.</p>
+                        </div>
+                        <div class="project-item" data-skill-tags="backend">
+                            <h4 class="font-semibold text-indigo-700">Plateforme IRIS</h4>
+                            <p class="text-sm text-stone-600">Chez Kanopee</p>
+                            <p class="mt-2 text-stone-700">Conception, développement et Lead technique sur la plateforme IRIS (cartes de la qualité de l'air à très haute résolution).</p>
+                        </div>
+                        <div class="project-item" data-skill-tags="ml">
+                            <h4 class="font-semibold text-indigo-700">Modèle d'IA (EXPLUME)</h4>
+                            <p class="text-sm text-stone-600">Chez LMD, Ecole Polytechnique</p>
+                            <p class="mt-2 text-stone-700">Développement d'un modèle d'IA utilisé pour l'étude de la pollution de l'air et de la santé humaine.</p>
+                        </div>
+                        <div class="project-item" data-skill-tags="backend">
+                            <h4 class="font-semibold text-indigo-700">Logiciels Scientifiques (MOSESS, NEMO)</h4>
+                            <p class="text-sm text-stone-600">Centre de recherche de l'Armée Grecque</p>
+                            <p class="mt-2 text-stone-700">Pilotage et développement de logiciels scientifiques pour la recherche.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: Leadership & Soft Skills -->
+        <section id="leadership" class="mb-20 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-stone-900 mb-4">Leadership & Soft Skills</h2>
+            <p class="text-lg text-stone-700 max-w-4xl mb-10">
+                La technique est un outil, mais le succès d'un projet réside dans la manière dont l'équipe collabore. Cette section explore mon approche du leadership, de la stratégie et du mentorat. Cliquez sur chaque compétence pour voir ma définition et des exemples concrets de sa mise en application.
+            </p>
+
+            <div class="flex flex-col md:flex-row gap-8">
+                <div class="md:w-1/3">
+                    <div class="flex flex-row md:flex-col flex-wrap gap-2">
+                        <button class="soft-skill-btn active" data-skill-id="critique" onclick="showSoftSkill('critique', this)">Pensée Critique Stratégique</button>
+                        <button class="soft-skill-btn inactive" data-skill-id="mentorat" onclick="showSoftSkill('mentorat', this)">Mentorat & Coaching</button>
+                        <button class="soft-skill-btn inactive" data-skill-id="decision" onclick="showSoftSkill('decision', this)">Prise de Décision</button>
+                        <button class="soft-skill-btn inactive" data-skill-id="leadership" onclick="showSoftSkill('leadership', this)">Leadership & Empathie</button>
+                        <button class="soft-skill-btn inactive" data-skill-id="agilite" onclick="showSoftSkill('agilite', this)">Adaptabilité et Agilité</button>
+                    </div>
+                </div>
+                <div class="md:w-2/3">
+                    <div class="bg-white rounded-xl shadow-xl p-6 min-h-[250px]">
+                        <div id="soft-skill-content">
+                            <!-- Content will be injected by JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 4: Parcours -->
+        <section id="parcours" class="mb-20 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-stone-900 mb-4">Parcours Professionnel & Éducation</h2>
+            <p class="text-lg text-stone-700 max-w-4xl mb-10">
+                Cette chronologie retrace mon parcours, de ma formation académique à mes rôles de leadership actuels. Cliquez sur chaque élément pour afficher ou masquer les détails de l'expérience.
+            </p>
+
+            <div class="max-w-3xl mx-auto">
+                <div class="timeline-item">
+                    <div class="timeline-line"></div>
+                    <div class="timeline-dot"></div>
+                    <div class="pb-10">
+                        <div class="cursor-pointer" onclick="toggleTimeline('geeglee')">
+                            <h3 class="text-lg font-semibold text-stone-900">Développeur Lead / Lead Tech</h3>
+                            <p class="text-md font-medium text-indigo-600">Geeglee, Paris</p>
+                            <p class="text-sm text-stone-500">Juin 2018 – Aujourd'hui (7 ans, 5 mois)</p>
+                        </div>
+                        <div id="details-geeglee" class="mt-4 pl-4 border-l-2 border-stone-200" style="display: block;">
+                            <ul class="list-disc list-outside space-y-2 text-stone-700 ml-5">
+                                <li>Conçu et piloté du back-end d'une plateforme innovante d'ingénierie système (GEP), intégrant des algorithmes de Machine Learning, de calcul parallèle et des API REST/SaaS.</li>
+                                <li>Encadré et coaché l'équipe de développement (3 personnes, Front/Back), assurant la qualité du code (revue) et le respect des objectifs du sprint.</li>
+                                <li>Mis en place et optimisé un pipeline CI/CD complet pour l'automatisation des déploiements (Jenkins), réduisant le temps de mise en production de 50%.</li>
+                                <li>Coordonné les projets clients stratégiques, servant d'interface technique clé entre les équipes et les parties prenantes externes.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-line"></div>
+                    <div class="timeline-dot"></div>
+                    <div class="pb-10">
+                        <div class="cursor-pointer" onclick="toggleTimeline('kanopee')">
+                            <h3 class="text-lg font-semibold text-stone-900">Développeur Lead / Architecte système</h3>
+                            <p class="text-md font-medium text-indigo-600">Kanopee, Paris</p>
+                            <p class="text-sm text-stone-500">Avril 2017 – Octobre 2017 (7 mois)</p>
+                        </div>
+                        <div id="details-kanopee" class="mt-4 pl-4 border-l-2 border-stone-200" style="display: none;">
+                            <ul class="list-disc list-outside space-y-2 text-stone-700 ml-5">
+                                <li>Conçu, développé et été Lead technique sur la plateforme IRIS (cartes de la qualité de l'air à très haute résolution).</li>
+                                <li>Coordonné l'équipe de développement (2 personnes) et géré les dépendances inter-équipes.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-line"></div>
+                    <div class="timeline-dot"></div>
+                    <div class="pb-10">
+                        <div class="cursor-pointer" onclick="toggleTimeline('lmd')">
+                            <h3 class="text-lg font-semibold text-stone-900">R&D</h3>
+                            <p class="text-md font-medium text-indigo-600">LMD, Ecole Polytechnique, Palaiseau</p>
+                            <p class="text-sm text-stone-500">Avril 2012 – Août 2017 (5 ans, 5 mois)</p>
+                        </div>
+                        <div id="details-lmd" class="mt-4 pl-4 border-l-2 border-stone-200" style="display: none;">
+                            <ul class="list-disc list-outside space-y-2 text-stone-700 ml-5">
+                                <li>Développement sur le modèle national français CHIMERE utilisé pour les prévisions nationales de la qualité de l'air.</li>
+                                <li>Développement d'un modèle d'IA (EXPLUME) utilisé pour l'étude de la pollution de l'air et de la santé humaine.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-line"></div>
+                    <div class="timeline-dot"></div>
+                    <div class="pb-10">
+                        <div class="cursor-pointer" onclick="toggleTimeline('armee')">
+                            <h3 class="text-lg font-semibold text-stone-900">Analyste</h3>
+                            <p class="text-md font-medium text-indigo-600">Centre de recherche de l'Armée Grecque, Athènes</p>
+                            <p class="text-sm text-stone-500">Août 2010 – Avril 2011 (8 mois)</p>
+                        </div>
+                        <div id="details-armee" class="mt-4 pl-4 border-l-2 border-stone-200" style="display: none;">
+                            <ul class="list-disc list-outside space-y-2 text-stone-700 ml-5">
+                                <li>Pilotage et développement des logiciels scientifiques (MOSESS, NEMO, BEM).</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="pb-10">
+                        <div class="cursor-pointer" onclick="toggleTimeline('education')">
+                            <h3 class="text-lg font-semibold text-stone-900">Éducation</h3>
+                            <p class="text-md font-medium text-indigo-600">Université Aristote de Thessalonique (AUTH), Grèce</p>
+                            <p class="text-sm text-stone-500">... – Mars 2012</p>
+                        </div>
+                        <div id="details-education" class="mt-4 pl-4 border-l-2 border-stone-200" style="display: none;">
+                            <ul class="list-disc list-outside space-y-2 text-stone-700 ml-5">
+                                <li>Doctorat en R&D.</li>
+                                <li>Master en Géophysique.</li>
+                                <li>Diplôme de Physique.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-stone-800 text-stone-300 py-8">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <p>&copy; 2025 Konstantinos MARKAKIS</p>
+            <p class="text-sm text-stone-400 mt-1">CV interactif généré pour une exploration dynamique.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            initChart();
+            showSoftSkill('critique', document.querySelector('.soft-skill-btn[data-skill-id="critique"]'));
+            setupNavigation();
+        });
+
+        function setupNavigation() {
+            const sections = document.querySelectorAll('section[id]');
+            const navLinks = document.querySelectorAll('a[data-navlink]');
+            const mobileNav = document.getElementById('mobile-nav');
+
+            const observerOptions = {
+                root: null,
+                rootMargin: '0px',
+                threshold: 0.4
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const id = entry.target.id;
+                        navLinks.forEach(link => {
+                            link.classList.toggle('active', link.dataset.navlink === id);
+                        });
+                        if (document.activeElement !== mobileNav) {
+                            mobileNav.value = id;
+                        }
+                    }
+                });
+            }, observerOptions);
+
+            sections.forEach(section => {
+                observer.observe(section);
+            });
+
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const targetId = link.getAttribute('href');
+                    document.querySelector(targetId).scrollIntoView({ behavior: 'smooth' });
+                });
+            });
+
+            mobileNav.addEventListener('change', (e) => {
+                const targetId = `#${e.target.value}`;
+                document.querySelector(targetId).scrollIntoView({ behavior: 'smooth' });
+            });
+        }
+
+        const skillsData = {
+            labels: ['Python', 'SQL', 'Scikit-learn/XGBoost', 'Jenkins/Git/Jira', 'Django/REST API', 'Mathématiques Avancées'],
+            data: [12, 12, 5, 7, 6, 20]
+        };
+
+        function initChart() {
+            const ctx = document.getElementById('skillsChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: skillsData.labels,
+                    datasets: [{
+                        label: 'Années d\'expérience',
+                        data: skillsData.data,
+                        backgroundColor: 'rgba(79, 70, 229, 0.8)', // indigo-600
+                        borderColor: 'rgba(79, 70, 229, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            grid: {
+                                display: false
+                            }
+                        },
+                        y: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: ${context.parsed.x} ans`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function filterProjects(skill, element) {
+            document.querySelectorAll('.skill-card').forEach(card => card.classList.remove('active'));
+            element.classList.add('active');
+
+            const projectList = document.getElementById('project-list');
+            const projects = projectList.querySelectorAll('.project-item');
+
+            projects.forEach(project => {
+                const tags = project.dataset.skillTags.split(' ');
+                if (skill === 'all' || tags.includes(skill)) {
+                    project.style.display = 'block';
+                    setTimeout(() => project.style.opacity = 1, 10);
+                } else {
+                    project.style.opacity = 0;
+                    setTimeout(() => project.style.display = 'none', 300);
+                }
+            });
+        }
+
+        const softSkillsContent = {
+            critique: {
+                title: 'Pensée Critique Stratégique',
+                desc: "Expertise en analyse de données complexes et en évaluation proactive des risques pour éclairer les décisions à long terme.",
+                evidence: [
+                    "Conception et pilotage du back-end (Geeglee)",
+                    "Coordination des projets clients stratégiques (Geeglee)"
+                ]
+            },
+            mentorat: {
+                title: 'Mentorat & Coaching',
+                desc: "Coaching ciblé du personnel junior et expertise en revue de code pour développer l'autonomie et garantir la qualité logicielle.",
+                evidence: [
+                    "Encadré et coaché l'équipe de développement (3 personnes) (Geeglee)",
+                    "Coordonné l'équipe de développement (2 personnes) (Kanopee)"
+                ]
+            },
+            decision: {
+                title: 'Prise de Décision',
+                desc: "Gestion efficace des situations de haute pression, avec une orientation technologique claire pour choisir la solution optimale.",
+                evidence: [
+                    "Choix de l'architecture pour la plateforme IRIS (Kanopee)",
+                    "Optimisation du pipeline CI/CD (Jenkins) (Geeglee)"
+                ]
+            },
+            leadership: {
+                title: 'Leadership & Empathie',
+                desc: "Maintien d'un moral et d'une motivation d'équipe élevés durant les phases de stress, grâce à l'empathie et à la communication constructive.",
+                evidence: [
+                    "Servant d'interface technique clé entre les équipes et les parties prenantes (Geeglee)",
+                    "Gestion des dépendances inter-équipes (Kanopee)"
+                ]
+            },
+            agilite: {
+                title: 'Adaptabilité et Agilité',
+                desc: "Capacité avérée à faire pivoter rapidement les priorités et les ressources, garantissant l'alignement du produit avec l'évolution des objectifs.",
+                evidence: [
+                    "Gestion de projets clients stratégiques (Geeglee)",
+                    "Passage de la R&D académique au Lead Tech en startup (Parcours)"
+                ]
+            }
+        };
+
+        function showSoftSkill(skillId, element) {
+            document.querySelectorAll('.soft-skill-btn').forEach(btn => {
+                btn.classList.remove('active');
+                btn.classList.add('inactive');
+            });
+            element.classList.add('active');
+            element.classList.remove('inactive');
+
+            const content = softSkillsContent[skillId];
+            const container = document.getElementById('soft-skill-content');
+
+            let evidenceHtml = content.evidence.map(item => 
+                `<li class="flex items-start">
+                    <span class="flex-shrink-0 w-5 h-5 bg-indigo-100 text-indigo-700 rounded-full flex items-center justify-center mr-3 text-xs font-bold">✓</span>
+                    <span class="text-stone-700">${item}</span>
+                </li>`
+            ).join('');
+
+            container.innerHTML = `
+                <h4 class="text-xl font-semibold text-stone-900 mb-2">${content.title}</h4>
+                <p class="text-stone-700 mb-4">${content.desc}</p>
+                <h5 class="text-sm font-semibold text-stone-500 uppercase tracking-wider mb-3">Exemples Concrets :</h5>
+                <ul class="space-y-2">
+                    ${evidenceHtml}
+                </ul>
+            `;
+        }
+        
+        function toggleTimeline(id) {
+            const details = document.getElementById(`details-${id}`);
+            if (details.style.display === 'none') {
+                details.style.display = 'block';
+            } else {
+                details.style.display = 'none';
+            }
+        }
+
+    </script>
+</body>
+</html>
